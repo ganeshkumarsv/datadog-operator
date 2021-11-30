@@ -14,6 +14,7 @@ import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/dependencies"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/override"
 	"github.com/DataDog/datadog-operator/pkg/controller/utils"
 	"github.com/go-logr/logr"
 
@@ -141,6 +142,7 @@ func reconcilerOptionsToFeatureOptions(opts *ReconcilerOptions, logger logr.Logg
 }
 
 func (r *Reconciler) reconcileV2ClusterAgent(logger logr.Logger, features []feature.Feature, dda *v2alpha1.DatadogAgent, newStatus *v2alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+	var result reconcile.Result
 	// ClusterAgentDeployment new Deployment instance
 	clusterAgentDeployment := &appsv1.Deployment{}
 
@@ -155,6 +157,23 @@ func (r *Reconciler) reconcileV2ClusterAgent(logger logr.Logger, features []feat
 	}
 	if len(errs) > 0 {
 		logger.V(2).Info("ManagerClusterAgent error", "errs", errs)
+	}
+
+	// Override the Cluster Agent Deployment with provided override
+	dcaOverride, found := dda.Spec.Override[v2alpha1.ClusterAgentResourceName]
+	if found {
+		if dcaOverride.Name != "" {
+			clusterAgentDeployment.Name = dcaOverride.Name
+		}
+		if dcaOverride.DatadogAgentPodTemplateOverride != nil {
+			newPodTemplateSpec, err := override.OverridePodTemplateSpec(&clusterAgentDeployment.Spec.Template, dcaOverride.DatadogAgentPodTemplateOverride)
+			if err != nil {
+				logger.V(2).Error(err, "error during PodTemplateSpec override")
+				return result, err
+			} else {
+				clusterAgentDeployment.Spec.Template = *newPodTemplateSpec
+			}
+		}
 	}
 
 	return reconcile.Result{}, nil
