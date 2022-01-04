@@ -10,6 +10,8 @@ import (
 
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
+	apiutils "github.com/DataDog/datadog-operator/apis/utils"
+
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
 )
 
@@ -24,7 +26,9 @@ func buildKSMfeature(options *feature.Options) feature.Feature {
 	return &ksmFeature{}
 }
 
-type ksmFeature struct{}
+type ksmFeature struct {
+	enable bool
+}
 
 // Configure use to configure the feature from a v2alpha1.DatadogAgent instance.
 func (f *ksmFeature) Configure(dda *v2alpha1.DatadogAgent) bool {
@@ -33,7 +37,11 @@ func (f *ksmFeature) Configure(dda *v2alpha1.DatadogAgent) bool {
 
 // ConfigureV1 use to configure the feature from a v1alpha1.DatadogAgent instance.
 func (f *ksmFeature) ConfigureV1(dda *v1alpha1.DatadogAgent) bool {
-	return true
+	if dda.Spec.Features.KubeStateMetricsCore != nil && apiutils.BoolValue(dda.Spec.Features.KubeStateMetricsCore.Enabled) {
+		f.enable = true
+	}
+
+	return f.enable
 }
 
 // ManageDependencies allows a feature to manage its dependencies.
