@@ -13,6 +13,8 @@ import (
 	"github.com/DataDog/datadog-operator/pkg/defaulting"
 	"github.com/DataDog/datadog-operator/pkg/testutils"
 
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
+
 	"github.com/go-logr/logr"
 	assert "github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
@@ -187,7 +189,7 @@ func (test clusterAgentDeploymentFromInstanceTest) Run(t *testing.T) {
 	t.Helper()
 	logf.SetLogger(zap.New(zap.UseDevMode(true)))
 	logger := logf.Log.WithName(t.Name())
-	got, _, err := newClusterAgentDeploymentFromInstance(logger, test.agentdeployment, test.selector)
+	got, _, err := newClusterAgentDeploymentFromInstance(logger, nil, test.agentdeployment, test.selector)
 	if test.wantErr {
 		assert.Error(t, err, "newClusterAgentDeploymentFromInstance() expected an error")
 	} else {
@@ -1430,6 +1432,7 @@ func TestReconcileDatadogAgent_createNewClusterAgentDeployment(t *testing.T) {
 	type args struct {
 		logger          logr.Logger
 		agentdeployment *datadoghqv1alpha1.DatadogAgent
+		features        []feature.Feature
 		newStatus       *datadoghqv1alpha1.DatadogAgentStatus
 	}
 	tests := []struct {
@@ -1449,6 +1452,7 @@ func TestReconcileDatadogAgent_createNewClusterAgentDeployment(t *testing.T) {
 			args: args{
 				logger:          localLog,
 				agentdeployment: test.NewDefaultedDatadogAgent("bar", "foo", &test.NewDatadogAgentOptions{ClusterAgentEnabled: true}),
+				features:        nil,
 				newStatus:       &datadoghqv1alpha1.DatadogAgentStatus{},
 			},
 			want:    reconcile.Result{},
@@ -1463,7 +1467,7 @@ func TestReconcileDatadogAgent_createNewClusterAgentDeployment(t *testing.T) {
 				recorder:   recorder,
 				forwarders: forwarders,
 			}
-			got, err := r.createNewClusterAgentDeployment(tt.args.logger, tt.args.agentdeployment, tt.args.newStatus)
+			got, err := r.createNewClusterAgentDeployment(tt.args.logger, nil, tt.args.agentdeployment, tt.args.newStatus)
 			if tt.wantErr {
 				assert.Error(t, err, "ReconcileDatadogAgent.createNewClusterAgentDeployment() should return an error")
 			} else {

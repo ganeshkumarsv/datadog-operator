@@ -31,9 +31,11 @@ import (
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/comparison"
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/datadog"
 	"github.com/DataDog/datadog-operator/pkg/kubernetes"
+
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
 )
 
-func (r *Reconciler) reconcileClusterChecksRunner(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+func (r *Reconciler) reconcileClusterChecksRunner(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
 	result, err := r.manageClusterChecksRunnerDependencies(logger, dda, newStatus)
 	if utils.ShouldReturn(result, err) {
 		return result, err

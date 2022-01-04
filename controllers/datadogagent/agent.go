@@ -31,10 +31,13 @@ import (
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/datadog"
 	"github.com/DataDog/datadog-operator/pkg/kubernetes"
 	"github.com/DataDog/datadog-operator/pkg/version"
+
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
+
 	edsdatadoghqv1alpha1 "github.com/DataDog/extendeddaemonset/api/v1alpha1"
 )
 
-func (r *Reconciler) reconcileAgent(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+func (r *Reconciler) reconcileAgent(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
 	result, err := r.manageAgentDependencies(logger, dda, newStatus)
 	if utils.ShouldReturn(result, err) {
 		return result, err

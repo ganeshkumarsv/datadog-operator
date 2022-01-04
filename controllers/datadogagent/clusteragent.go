@@ -32,9 +32,11 @@ import (
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/comparison"
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/datadog"
 	"github.com/DataDog/datadog-operator/pkg/kubernetes"
+
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
 )
 
-func (r *Reconciler) reconcileClusterAgent(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+func (r *Reconciler) reconcileClusterAgent(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
 	result, err := r.manageClusterAgentDependencies(logger, dda, newStatus)
 	if utils.ShouldReturn(result, err) {
 		return result, err
@@ -62,12 +64,12 @@ func (r *Reconciler) reconcileClusterAgent(logger logr.Logger, dda *datadoghqv1a
 			if errors.IsNotFound(err) {
 				logger.Info("the ClusterAgent deployment is not found", "name", nsName.Name, "namespace", nsName.Namespace)
 				// Create and attach a ClusterAgentDeployment
-				return r.createNewClusterAgentDeployment(logger, dda, newStatus)
+				return r.createNewClusterAgentDeployment(logger, features, dda, newStatus)
 			}
 			return reconcile.Result{}, err
 		}
 
-		if result, err = r.updateClusterAgentDeployment(logger, dda, clusterAgentDeployment, newStatus); err != nil {
+		if result, err = r.updateClusterAgentDeployment(logger, features, dda, clusterAgentDeployment, newStatus); err != nil {
 			return result, err
 		}
 
@@ -80,8 +82,8 @@ func (r *Reconciler) reconcileClusterAgent(logger logr.Logger, dda *datadoghqv1a
 	return reconcile.Result{}, nil
 }
 
-func (r *Reconciler) createNewClusterAgentDeployment(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
-	newDCA, hash, err := newClusterAgentDeploymentFromInstance(logger, dda, nil)
+func (r *Reconciler) createNewClusterAgentDeployment(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+	newDCA, hash, err := newClusterAgentDeploymentFromInstance(logger, features, dda, nil)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -109,8 +111,8 @@ func updateStatusWithClusterAgent(dca *appsv1.Deployment, newStatus *datadoghqv1
 	newStatus.ClusterAgent = updateDeploymentStatus(dca, newStatus.ClusterAgent, updateTime)
 }
 
-func (r *Reconciler) updateClusterAgentDeployment(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, dca *appsv1.Deployment, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
-	newDCA, hash, err := newClusterAgentDeploymentFromInstance(logger, dda, dca.Spec.Selector)
+func (r *Reconciler) updateClusterAgentDeployment(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, dca *appsv1.Deployment, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
+	newDCA, hash, err := newClusterAgentDeploymentFromInstance(logger, features, dda, dca.Spec.Selector)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -148,7 +150,7 @@ func (r *Reconciler) updateClusterAgentDeployment(logger logr.Logger, dda *datad
 }
 
 // newClusterAgentDeploymentFromInstance creates a Cluster Agent Deployment from a given DatadogAgent
-func newClusterAgentDeploymentFromInstance(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, selector *metav1.LabelSelector) (*appsv1.Deployment, string, error) {
+func newClusterAgentDeploymentFromInstance(logger logr.Logger, features []feature.Feature, dda *datadoghqv1alpha1.DatadogAgent, selector *metav1.LabelSelector) (*appsv1.Deployment, string, error) {
 	labels := getDefaultLabels(dda, datadoghqv1alpha1.DefaultClusterAgentResourceSuffix, getClusterAgentVersion(dda))
 	labels[datadoghqv1alpha1.AgentDeploymentNameLabelKey] = dda.Name
 	labels[datadoghqv1alpha1.AgentDeploymentComponentLabelKey] = datadoghqv1alpha1.DefaultClusterAgentResourceSuffix
@@ -186,6 +188,13 @@ func newClusterAgentDeploymentFromInstance(logger logr.Logger, dda *datadoghqv1a
 			Selector: selector,
 		},
 	}
+
+	for _, feat := range features {
+		if errFeat := feat.ManageClusterAgent(&dca.Spec.Template); errFeat != nil {
+			return nil, "", err
+		}
+	}
+
 	hash, err := comparison.SetMD5DatadogAgentGenerationAnnotation(&dca.ObjectMeta, dca.Spec)
 	return dca, hash, err
 }
