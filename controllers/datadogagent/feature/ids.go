@@ -9,8 +9,10 @@ package feature
 type IDType int
 
 const (
-	// KubernetesStateCoreIDType Kubernetes state core check feature
+	// KubernetesStateCoreIDType Kubernetes state core check feature.
 	KubernetesStateCoreIDType IDType = iota
-	// OrchestratorExplorerIDType Orchestrator Explorer feature
+	// OrchestratorExplorerIDType Orchestrator Explorer feature.
 	OrchestratorExplorerIDType
+	// DummyIDType Dummt feature.
+	DummyIDType
 )

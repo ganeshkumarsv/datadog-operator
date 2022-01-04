@@ -6,6 +6,7 @@
 package feature
 
 import (
+	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 	"github.com/go-logr/logr"
 
@@ -19,7 +20,10 @@ import (
 type Feature interface {
 	// Configure use to configure the internal of a Feature
 	// It should return `true` if the feature is enabled, else `false`.
-	Configure(dda *v2alpha1.DatadogAgent, options *Options) bool
+	Configure(dda *v2alpha1.DatadogAgent) bool
+	// ConfigureV1 use to configure the internal of a Feature from v1alpha1.DatadogAgent
+	// It should return `true` if the feature is enabled, else `false`.
+	ConfigureV1(dda *v1alpha1.DatadogAgent) bool
 	// ManageDependencies allows a feature to manage its dependencies.
 	// Feature's dependencies should be added in the store.
 	ManageDependencies(store DependenciesStoreClient) error
@@ -43,10 +47,22 @@ type Options struct {
 
 // BuildFunc function type used by each Feature during its factory registration.
 // It returns the Feature interface.
-type BuildFunc func() Feature
+type BuildFunc func(options *Options) Feature
 
 // DependenciesStoreClient dependencies store client interface
 type DependenciesStoreClient interface {
 	AddOrUpdate(kind string, namespace string, name string, obj client.Object)
 	Get(kind string, namespace, name string) (client.Object, bool)
+}
+
+// PodFeatureConfiguration use to store a Pod Feature Configuration.
+type PodFeatureConfiguration struct {
+	Containers map[string]ContainerFeatureConfiguration
+
+	Volumes []corev1.Volume
+}
+
+// ContainerFeatureConfiguration use to store a Container Feature Configuration.
+type ContainerFeatureConfiguration struct {
+	VolumeMounts []corev1.VolumeMount
 }

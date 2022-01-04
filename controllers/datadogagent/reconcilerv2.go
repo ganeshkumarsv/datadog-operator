@@ -166,13 +166,12 @@ func (r *Reconciler) reconcileV2ClusterAgent(logger logr.Logger, features []feat
 			clusterAgentDeployment.Name = dcaOverride.Name
 		}
 		if dcaOverride.DatadogAgentPodTemplateOverride != nil {
-			newPodTemplateSpec, err := override.OverridePodTemplateSpec(&clusterAgentDeployment.Spec.Template, dcaOverride.DatadogAgentPodTemplateOverride)
+			newPodTemplateSpec, err := override.PodTemplateSpec(&clusterAgentDeployment.Spec.Template, dcaOverride.DatadogAgentPodTemplateOverride)
 			if err != nil {
 				logger.V(2).Error(err, "error during PodTemplateSpec override")
 				return result, err
-			} else {
-				clusterAgentDeployment.Spec.Template = *newPodTemplateSpec
 			}
+			clusterAgentDeployment.Spec.Template = *newPodTemplateSpec
 		}
 	}
 

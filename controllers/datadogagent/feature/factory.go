@@ -10,6 +10,7 @@ import (
 	"sort"
 	"sync"
 
+	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 )
 
@@ -46,9 +47,36 @@ func BuildFeatures(dda *v2alpha1.DatadogAgent, options *Options) ([]Feature, err
 	})
 
 	for _, id := range sortedkeys {
-		feat := featureBuilders[id]()
+		feat := featureBuilders[id](options)
 		// only add feat to the output if the feature is enabled
-		if enabled := feat.Configure(dda, options); enabled {
+		if enabled := feat.Configure(dda); enabled {
+			output = append(output, feat)
+		}
+	}
+
+	return output, nil
+}
+
+// BuildFeaturesV1 use to build a list features depending of the v1alpha1.DatadogAgent instance
+func BuildFeaturesV1(dda *v1alpha1.DatadogAgent, options *Options) ([]Feature, error) {
+	builderMutex.RLock()
+	defer builderMutex.RUnlock()
+
+	var output []Feature
+
+	// to always return in feature in the same order we need to sort the map keys
+	sortedkeys := make([]IDType, 0, len(featureBuilders))
+	for key := range featureBuilders {
+		sortedkeys = append(sortedkeys, key)
+	}
+	sort.Slice(sortedkeys, func(i, j int) bool {
+		return sortedkeys[i] < sortedkeys[j]
+	})
+
+	for _, id := range sortedkeys {
+		feat := featureBuilders[id](options)
+		// only add feat to the output if the feature is enabled
+		if enabled := feat.ConfigureV1(dda); enabled {
 			output = append(output, feat)
 		}
 	}

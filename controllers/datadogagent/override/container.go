@@ -11,8 +11,8 @@ import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 )
 
-// OverridePodTemplate use to override a corev1.Container with a 2alpha1.DatadogAgentGenericContainer.
-func OverrideContainer(podTemplateSpec *corev1.PodTemplateSpec, override *v2alpha1.DatadogAgentGenericContainer) (*corev1.Container, error) {
+// Container use to override a corev1.Container with a 2alpha1.DatadogAgentGenericContainer.
+func Container(podTemplateSpec *corev1.PodTemplateSpec, override *v2alpha1.DatadogAgentGenericContainer) (*corev1.Container, error) {
 	// TODO(clamoriniere): implement OverrideContainer
 	return nil, nil
 }

@@ -12,14 +12,14 @@ import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 )
 
-// OverridePodTemplate use to override a corev1.PodTemplateSpec with a 2alpha1.DatadogAgentPodTemplateOverride.
-func OverridePodTemplateSpec(podTemplateSpec *corev1.PodTemplateSpec, override *v2alpha1.DatadogAgentPodTemplateOverride) (*corev1.PodTemplateSpec, error) {
+// PodTemplateSpec use to override a corev1.PodTemplateSpec with a 2alpha1.DatadogAgentPodTemplateOverride.
+func PodTemplateSpec(podTemplateSpec *corev1.PodTemplateSpec, override *v2alpha1.DatadogAgentPodTemplateOverride) (*corev1.PodTemplateSpec, error) {
 	// TODO(clamoriniere): implement OverridePodTemplate
 
 	var errs []error
 	// Loop over container
 	for _, container := range override.Containers {
-		if _, err := OverrideContainer(podTemplateSpec, &container); err != nil {
+		if _, err := Container(podTemplateSpec, &container); err != nil {
 			errs = append(errs, err)
 		}
 	}
