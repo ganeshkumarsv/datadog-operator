@@ -8,6 +8,7 @@ package feature
 import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
+	"github.com/DataDog/datadog-operator/pkg/kubernetes"
 	"github.com/go-logr/logr"
 
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -51,8 +52,8 @@ type BuildFunc func(options *Options) Feature
 
 // DependenciesStoreClient dependencies store client interface
 type DependenciesStoreClient interface {
-	AddOrUpdate(kind string, namespace string, name string, obj client.Object)
-	Get(kind string, namespace, name string) (client.Object, bool)
+	AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object)
+	Get(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
 }
 
 // PodFeatureConfiguration use to store a Pod Feature Configuration.

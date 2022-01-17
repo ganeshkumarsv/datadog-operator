@@ -2468,7 +2468,7 @@ func TestReconcileDatadogAgent_Reconcile(t *testing.T) {
 					return err
 				}
 
-				unstructured := emptyCiliumUnstructuredPolicy()
+				unstructured := cilium.EmptyCiliumUnstructuredPolicy()
 				err = c.Get(context.TODO(), newRequest(resourcesNamespace, dsName).NamespacedName, unstructured)
 				if err != nil {
 					return err

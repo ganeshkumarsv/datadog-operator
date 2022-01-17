@@ -121,6 +121,13 @@ func (r *Reconciler) internalReconcile(ctx context.Context, request reconcile.Re
 	return r.reconcileInstance(ctx, reqLogger, instance)
 }
 
+func reconcilerOptionsToFeatureOptions(opts *ReconcilerOptions, logger logr.Logger) *feature.Options {
+	return &feature.Options{
+		SupportExtendedDaemonset: opts.SupportExtendedDaemonset,
+		Logger:                   logger,
+	}
+}
+
 func (r *Reconciler) reconcileInstance(ctx context.Context, logger logr.Logger, instance *datadoghqv1alpha1.DatadogAgent) (reconcile.Result, error) {
 	var result reconcile.Result
 
