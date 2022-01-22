@@ -31,10 +31,15 @@ const (
 )
 
 // NewStore returns a new Store instance
-func NewStore() *Store {
-	return &Store{
+func NewStore(options *StoreOptions) *Store {
+	store := &Store{
 		deps: make(map[kubernetes.ObjectKind]map[string]client.Object),
 	}
+	if options != nil {
+		store.supportCilium = options.SupportCilium
+	}
+
+	return store
 }
 
 // Store Kubernetes resource dependencies store
@@ -42,6 +47,13 @@ func NewStore() *Store {
 type Store struct {
 	deps  map[kubernetes.ObjectKind]map[string]client.Object
 	mutex sync.RWMutex
+
+	supportCilium bool
+}
+
+// StoreOptions use to provide to NewStore() function some Store creation options.
+type StoreOptions struct {
+	SupportCilium bool
 }
 
 // AddOrUpdate used to add or update an object in the Store
@@ -135,7 +147,7 @@ func (ds *Store) Cleanup(ctx context.Context, k8sClient client.Client, ddaNs, dd
 	listOptions := &client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirementLabel),
 	}
-	for _, kind := range kubernetes.GetResourcesKind() {
+	for _, kind := range kubernetes.GetResourcesKind(ds.supportCilium) {
 		objList := kubernetes.ObjectListFromKind(kind)
 		if err := k8sClient.List(ctx, objList, listOptions); err != nil {
 			errs = append(errs, err)
