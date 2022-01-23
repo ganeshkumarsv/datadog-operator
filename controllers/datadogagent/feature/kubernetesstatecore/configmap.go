@@ -16,12 +16,14 @@ import (
 )
 
 func (f *ksmFeature) buildKSMCoreConfigMap() (*corev1.ConfigMap, error) {
+	if f.customConfig != nil && f.customConfig.ConfigMap != nil {
+		return nil, nil
+	}
 	if f.customConfig != nil && f.customConfig.ConfigData != nil {
 		return configmap.BuildConfiguration(f.owner, f.customConfig.ConfigData, f.configConfigMapName, ksmCoreCheckName)
 	}
 
 	configMap := buildDefaultConfigMap(f.owner, f.configConfigMapName, ksmCheckConfig(f.clusterChecksEnabled))
-
 	return configMap, nil
 }
 

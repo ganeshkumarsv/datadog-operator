@@ -831,10 +831,10 @@ func (r *Reconciler) manageClusterAgentRBACs(logger logr.Logger, dda *datadoghqv
 	}
 
 	if isOrchestratorExplorerEnabled(dda) && !isOrchestratorExplorerClusterCheck(dda) {
-		if result, err := r.createOrUpdateOrchestratorCoreRBAC(logger, dda, serviceAccountName, clusterAgentVersion, clusterAgentSuffix); err != nil {
+		if result, err := r.createOrUpdateOrchestratorCoreRBAC(logger, dda, serviceAccountName, clusterAgentVersion, common.ClusterAgentSuffix); err != nil {
 			return result, err
 		}
-	} else if result, err := r.cleanupOrchestratorCoreRBAC(logger, dda, clusterAgentSuffix); err != nil {
+	} else if result, err := r.cleanupOrchestratorCoreRBAC(logger, dda, common.ClusterAgentSuffix); err != nil {
 		return result, err
 	}
 

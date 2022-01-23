@@ -13,6 +13,7 @@ import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
 	"github.com/DataDog/datadog-operator/pkg/kubernetes"
+	"github.com/go-logr/logr"
 
 	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	common "github.com/DataDog/datadog-operator/controllers/datadogagent/common"
@@ -30,9 +31,15 @@ func init() {
 }
 
 func buildKSMfeature(options *feature.Options) feature.Feature {
-	return &ksmFeature{
+	ksmFeat := &ksmFeature{
 		rbacSuffix: common.ClusterAgentSuffix,
 	}
+
+	if options != nil {
+		ksmFeat.logger = options.Logger
+	}
+
+	return ksmFeat
 }
 
 type ksmFeature struct {
@@ -45,10 +52,13 @@ type ksmFeature struct {
 	owner               metav1.Object
 	customConfig        *apicommon.CustomConfig
 	configConfigMapName string
+
+	logger logr.Logger
 }
 
 // Configure use to configure the feature from a v2alpha1.DatadogAgent instance.
 func (f *ksmFeature) Configure(dda *v2alpha1.DatadogAgent) bool {
+	f.owner = dda
 	if dda.Spec.Features.KubeStateMetricsCore != nil && apiutils.BoolValue(dda.Spec.Features.KubeStateMetricsCore.Enabled) {
 		f.enable = true
 
@@ -72,6 +82,8 @@ func (f *ksmFeature) Configure(dda *v2alpha1.DatadogAgent) bool {
 
 // ConfigureV1 use to configure the feature from a v1alpha1.DatadogAgent instance.
 func (f *ksmFeature) ConfigureV1(dda *v1alpha1.DatadogAgent) bool {
+	f.owner = dda
+
 	if dda.Spec.Features.KubeStateMetricsCore != nil {
 		if apiutils.BoolValue(dda.Spec.Features.KubeStateMetricsCore.Enabled) {
 			f.enable = true
@@ -81,14 +93,14 @@ func (f *ksmFeature) ConfigureV1(dda *v1alpha1.DatadogAgent) bool {
 			if apiutils.BoolValue(dda.Spec.Features.KubeStateMetricsCore.ClusterCheck) {
 				f.clusterChecksEnabled = true
 				f.rbacSuffix = common.CheckRunnersSuffix
+				f.serviceAccountName = v1alpha1.GetClusterChecksRunnerServiceAccount(dda)
 			}
+		} else {
+			f.serviceAccountName = v1alpha1.GetClusterAgentServiceAccount(dda)
 		}
 
 		if dda.Spec.Features.KubeStateMetricsCore.Conf != nil {
 			f.customConfig = v1alpha1.ConvertCustomConfig(dda.Spec.Features.KubeStateMetricsCore.Conf)
-			f.serviceAccountName = v1alpha1.GetClusterChecksRunnerServiceAccount(dda)
-		} else {
-			f.serviceAccountName = v1alpha1.GetClusterAgentServiceAccount(dda)
 		}
 
 		f.configConfigMapName = apicommon.GetConfName(dda, f.customConfig, apicommon.DefaultKubeStateMetricsCoreConf)
@@ -110,9 +122,9 @@ func (f *ksmFeature) ManageDependencies(store feature.DependenciesStoreClient) e
 	}
 
 	// Manager RBAC permission
-	rbacName := getKubeStateMetricsRBACResourceName(f.owner, f.rbacSuffix)
+	rbacName := GetKubeStateMetricsRBACResourceName(f.owner, f.rbacSuffix)
 	if clusterRole := buildKubeStateMetricsCoreRBAC(f.owner, rbacName, ""); clusterRole != nil {
-		store.AddOrUpdate(kubernetes.ClusterRolesKind, configCM)
+		store.AddOrUpdate(kubernetes.ClusterRolesKind, clusterRole)
 	}
 
 	bindingInfo := rbac.RoleBindingInfo{

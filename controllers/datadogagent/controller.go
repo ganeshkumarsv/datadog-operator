@@ -142,7 +142,11 @@ func (r *Reconciler) reconcileInstance(ctx context.Context, logger logr.Logger, 
 	// -----------------------
 	// Manage dependencies
 	// -----------------------
-	depsStore := dependencies.NewStore(&dependencies.StoreOptions{SupportCilium: r.options.SupportCilium})
+	storeOptions := &dependencies.StoreOptions{
+		SupportCilium: r.options.SupportCilium,
+		Logger:        logger,
+	}
+	depsStore := dependencies.NewStore(storeOptions)
 	var errs []error
 	for _, feat := range features {
 		if featErr := feat.ManageDependencies(depsStore); err != nil {

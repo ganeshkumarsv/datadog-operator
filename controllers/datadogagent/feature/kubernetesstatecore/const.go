@@ -17,6 +17,7 @@ const (
 	ksmCoreCheckFolderName     = "kubernetes_state_core.d"
 )
 
-func getKubeStateMetricsRBACResourceName(owner metav1.Object, suffix string) string {
+// GetKubeStateMetricsRBACResourceName return the RBAC resources name
+func GetKubeStateMetricsRBACResourceName(owner metav1.Object, suffix string) string {
 	return fmt.Sprintf("%s-%s-%s-%s", owner.GetNamespace(), owner.GetName(), kubeStateMetricsRBACPrefix, suffix)
 }
