@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
 	"github.com/DataDog/datadog-operator/pkg/config"
@@ -29,7 +30,7 @@ func newAgentSecret(name string, dda *datadoghqv1alpha1.DatadogAgent) (*corev1.S
 		return nil, err
 	}
 
-	labels := getDefaultLabels(dda, datadoghqv1alpha1.DefaultClusterAgentResourceSuffix, getClusterAgentVersion(dda))
+	labels := getDefaultLabels(dda, apicommon.DefaultClusterAgentResourceSuffix, getClusterAgentVersion(dda))
 	annotations := getDefaultAnnotations(dda)
 
 	creds := dda.Spec.Credentials
@@ -37,9 +38,9 @@ func newAgentSecret(name string, dda *datadoghqv1alpha1.DatadogAgent) (*corev1.S
 
 	// Agent credentials has two more fields
 	if creds.Token != "" {
-		data[datadoghqv1alpha1.DefaultTokenKey] = []byte(creds.Token)
+		data[apicommon.DefaultTokenKey] = []byte(creds.Token)
 	} else if isClusterAgentEnabled(dda.Spec.ClusterAgent) && dda.Status.ClusterAgent != nil {
-		data[datadoghqv1alpha1.DefaultTokenKey] = []byte(dda.Status.ClusterAgent.GeneratedToken)
+		data[apicommon.DefaultTokenKey] = []byte(dda.Status.ClusterAgent.GeneratedToken)
 	}
 
 	secret := &corev1.Secret{

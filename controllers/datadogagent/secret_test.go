@@ -9,7 +9,7 @@ import (
 	"os"
 	"testing"
 
-	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
+	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	"github.com/DataDog/datadog-operator/controllers/testutils"
 	"github.com/DataDog/datadog-operator/pkg/config"
 )
@@ -84,11 +84,11 @@ func TestNewAgentSecret(t *testing.T) {
 				}
 
 				if len(result.Data) > 0 {
-					if string(result.Data[datadoghqv1alpha1.DefaultAPIKeyKey]) != tt.wantAPIKey {
-						t.Errorf("newAgentSecret() API key = %v, want %v", string(result.Data[datadoghqv1alpha1.DefaultAPIKeyKey]), tt.wantAPIKey)
+					if string(result.Data[apicommon.DefaultAPIKeyKey]) != tt.wantAPIKey {
+						t.Errorf("newAgentSecret() API key = %v, want %v", string(result.Data[apicommon.DefaultAPIKeyKey]), tt.wantAPIKey)
 					}
-					if string(result.Data[datadoghqv1alpha1.DefaultAPPKeyKey]) != tt.wantAppKey {
-						t.Errorf("newAgentSecret() App key = %v, want %v", string(result.Data[datadoghqv1alpha1.DefaultAPPKeyKey]), tt.wantAppKey)
+					if string(result.Data[apicommon.DefaultAPPKeyKey]) != tt.wantAppKey {
+						t.Errorf("newAgentSecret() App key = %v, want %v", string(result.Data[apicommon.DefaultAPPKeyKey]), tt.wantAppKey)
 					}
 				}
 			}

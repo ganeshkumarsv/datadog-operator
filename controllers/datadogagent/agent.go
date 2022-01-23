@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	"github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
 	cilium "github.com/DataDog/datadog-operator/pkg/cilium/v1"
@@ -233,7 +234,7 @@ func (r *Reconciler) updateExtendedDaemonSet(logger logr.Logger, dda *datadoghqv
 }
 
 func getHashAnnotation(annotations map[string]string) string {
-	return annotations[datadoghqv1alpha1.MD5AgentDeploymentAnnotationKey]
+	return annotations[common.MD5AgentDeploymentAnnotationKey]
 }
 
 func (r *Reconciler) updateDaemonSet(logger logr.Logger, dda *datadoghqv1alpha1.DatadogAgent, ds *appsv1.DaemonSet, newStatus *datadoghqv1alpha1.DatadogAgentStatus) (reconcile.Result, error) {
@@ -328,7 +329,7 @@ type agentNetworkPolicyBuilder struct {
 }
 
 func (b agentNetworkPolicyBuilder) Name() string {
-	return fmt.Sprintf("%s-%s", b.dda.Name, datadoghqv1alpha1.DefaultAgentResourceSuffix)
+	return fmt.Sprintf("%s-%s", b.dda.Name, common.DefaultAgentResourceSuffix)
 }
 
 func (b agentNetworkPolicyBuilder) NetworkPolicySpec() *datadoghqv1alpha1.NetworkPolicySpec {
@@ -375,7 +376,7 @@ func (b agentNetworkPolicyBuilder) BuildKubernetesPolicy() *networkingv1.Network
 				{
 					Port: &intstr.IntOrString{
 						Type:   intstr.Int,
-						IntVal: datadoghqv1alpha1.DefaultDogstatsdPort,
+						IntVal: common.DefaultDogstatsdPort,
 					},
 					Protocol: &protocolUDP,
 				},
@@ -420,7 +421,7 @@ func (b agentNetworkPolicyBuilder) BuildKubernetesPolicy() *networkingv1.Network
 func (b agentNetworkPolicyBuilder) PodSelector() metav1.LabelSelector {
 	return metav1.LabelSelector{
 		MatchLabels: map[string]string{
-			kubernetes.AppKubernetesInstanceLabelKey: datadoghqv1alpha1.DefaultAgentResourceSuffix,
+			kubernetes.AppKubernetesInstanceLabelKey: common.DefaultAgentResourceSuffix,
 			kubernetes.AppKubernetesPartOfLabelKey:   NewPartOfLabelValue(b.dda).String(),
 		},
 	}
@@ -582,7 +583,7 @@ func (b agentNetworkPolicyBuilder) BuildCiliumPolicy() *cilium.NetworkPolicy {
 						{
 							Ports: []cilium.PortProtocol{
 								{
-									Port:     strconv.Itoa(datadoghqv1alpha1.DefaultDogstatsdPort),
+									Port:     strconv.Itoa(common.DefaultDogstatsdPort),
 									Protocol: cilium.ProtocolUDP,
 								},
 							},
@@ -709,9 +710,9 @@ func daemonsetName(dda *datadoghqv1alpha1.DatadogAgent) string {
 }
 
 func newDaemonsetObjectMetaData(dda *datadoghqv1alpha1.DatadogAgent) metav1.ObjectMeta {
-	labels := getDefaultLabels(dda, datadoghqv1alpha1.DefaultAgentResourceSuffix, getAgentVersion(dda))
-	labels[datadoghqv1alpha1.AgentDeploymentNameLabelKey] = dda.Name
-	labels[datadoghqv1alpha1.AgentDeploymentComponentLabelKey] = datadoghqv1alpha1.DefaultAgentResourceSuffix
+	labels := getDefaultLabels(dda, common.DefaultAgentResourceSuffix, getAgentVersion(dda))
+	labels[common.AgentDeploymentNameLabelKey] = dda.Name
+	labels[common.AgentDeploymentComponentLabelKey] = common.DefaultAgentResourceSuffix
 
 	annotations := getDefaultAnnotations(dda)
 
@@ -731,7 +732,7 @@ func buildAgentConfigurationConfigMap(dda *datadoghqv1alpha1.DatadogAgent) (*cor
 	if !apiutils.BoolValue(dda.Spec.Agent.Enabled) {
 		return nil, nil
 	}
-	return buildConfigurationConfigMap(dda, dda.Spec.Agent.CustomConfig, getAgentCustomConfigConfigMapName(dda), datadoghqv1alpha1.AgentCustomConfigVolumeSubPath)
+	return buildConfigurationConfigMap(dda, datadoghqv1alpha1.ConvertCustomConfig(dda.Spec.Agent.CustomConfig), getAgentCustomConfigConfigMapName(dda), datadoghqv1alpha1.AgentCustomConfigVolumeSubPath)
 }
 
 func getInstallInfoConfigMapName(dda *datadoghqv1alpha1.DatadogAgent) string {

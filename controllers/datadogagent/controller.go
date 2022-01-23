@@ -30,6 +30,9 @@ import (
 
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/dependencies"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
+
+	// Use to register the ksm core feature
+	_ "github.com/DataDog/datadog-operator/controllers/datadogagent/feature/kubernetesstatecore"
 )
 
 const (

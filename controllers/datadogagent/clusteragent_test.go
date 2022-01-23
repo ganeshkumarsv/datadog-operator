@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1/test"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
@@ -18,7 +19,6 @@ import (
 	"github.com/go-logr/logr"
 	assert "github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -117,7 +117,7 @@ func clusterAgentDefaultEnvVars() []v1.EnvVar {
 		},
 		{
 			Name:  "DD_CLUSTER_AGENT_KUBERNETES_SERVICE_NAME",
-			Value: fmt.Sprintf("%s-%s", testDdaName, datadoghqv1alpha1.DefaultClusterAgentResourceSuffix),
+			Value: fmt.Sprintf("%s-%s", testDdaName, apicommon.DefaultClusterAgentResourceSuffix),
 		},
 		{
 			Name:      "DD_CLUSTER_AGENT_AUTH_TOKEN",
@@ -189,7 +189,9 @@ func (test clusterAgentDeploymentFromInstanceTest) Run(t *testing.T) {
 	t.Helper()
 	logf.SetLogger(zap.New(zap.UseDevMode(true)))
 	logger := logf.Log.WithName(t.Name())
-	got, _, err := newClusterAgentDeploymentFromInstance(logger, nil, test.agentdeployment, test.selector)
+	features, err := feature.BuildFeaturesV1(test.agentdeployment, &feature.Options{Logger: logger})
+	assert.NoError(t, err, "BuildFeaturesV1 error")
+	got, _, err := newClusterAgentDeploymentFromInstance(logger, features, test.agentdeployment, test.selector)
 	if test.wantErr {
 		assert.Error(t, err, "newClusterAgentDeploymentFromInstance() expected an error")
 	} else {
@@ -464,11 +466,11 @@ func Test_newClusterAgentDeploymentMountKSMCore(t *testing.T) {
 	clusterAgentPodSpec.Containers[0].Env = clusterAgentPodSpec.Containers[0].Env[:len(clusterAgentPodSpec.Containers[0].Env)-2]
 	envVars := []v1.EnvVar{
 		{
-			Name:  datadoghqv1alpha1.DDKubeStateMetricsCoreEnabled,
+			Name:  apicommon.DDKubeStateMetricsCoreEnabled,
 			Value: "true",
 		},
 		{
-			Name:  datadoghqv1alpha1.DDKubeStateMetricsCoreConfigMap,
+			Name:  apicommon.DDKubeStateMetricsCoreConfigMap,
 			Value: "bla",
 		},
 		{
@@ -1384,7 +1386,7 @@ func Test_newClusterAgentDeploymentFromInstance_CustomReplicas(t *testing.T) {
 				Annotations: map[string]string{},
 			},
 			Spec: appsv1.DeploymentSpec{
-				Template: corev1.PodTemplateSpec{
+				Template: v1.PodTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"agent.datadoghq.com/name":      "foo",
@@ -1481,15 +1483,15 @@ func TestReconcileDatadogAgent_createNewClusterAgentDeployment(t *testing.T) {
 func Test_PodAntiAffinity(t *testing.T) {
 	tests := []struct {
 		name     string
-		affinity *corev1.Affinity
-		want     *corev1.Affinity
+		affinity *v1.Affinity
+		want     *v1.Affinity
 	}{
 		{
 			name:     "no user-defined affinity - apply default",
 			affinity: nil,
-			want: &corev1.Affinity{
-				PodAntiAffinity: &corev1.PodAntiAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{
+			want: &v1.Affinity{
+				PodAntiAffinity: &v1.PodAntiAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: []v1.PodAffinityTerm{
 						{
 							LabelSelector: &metav1.LabelSelector{
 								MatchLabels: map[string]string{
@@ -1505,12 +1507,12 @@ func Test_PodAntiAffinity(t *testing.T) {
 
 		{
 			name: "user-defined affinity",
-			affinity: &corev1.Affinity{
-				PodAntiAffinity: &corev1.PodAntiAffinity{
-					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+			affinity: &v1.Affinity{
+				PodAntiAffinity: &v1.PodAntiAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
 						{
 							Weight: 50,
-							PodAffinityTerm: corev1.PodAffinityTerm{
+							PodAffinityTerm: v1.PodAffinityTerm{
 								LabelSelector: &metav1.LabelSelector{
 									MatchLabels: map[string]string{
 										"foo": "bar",
@@ -1522,12 +1524,12 @@ func Test_PodAntiAffinity(t *testing.T) {
 					},
 				},
 			},
-			want: &corev1.Affinity{
-				PodAntiAffinity: &corev1.PodAntiAffinity{
-					PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
+			want: &v1.Affinity{
+				PodAntiAffinity: &v1.PodAntiAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
 						{
 							Weight: 50,
-							PodAffinityTerm: corev1.PodAffinityTerm{
+							PodAffinityTerm: v1.PodAffinityTerm{
 								LabelSelector: &metav1.LabelSelector{
 									MatchLabels: map[string]string{
 										"foo": "bar",

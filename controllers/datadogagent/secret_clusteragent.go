@@ -12,8 +12,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
+
 	"github.com/go-logr/logr"
 )
 
@@ -28,7 +30,7 @@ func newExternalMetricsSecret(name string, dda *datadoghqv1alpha1.DatadogAgent) 
 		return nil, fmt.Errorf("unable to create external metrics secret, missing data in .Spec.ClusterAgent.Config.ExternalMetrics.Credentials")
 	}
 
-	labels := getDefaultLabels(dda, datadoghqv1alpha1.DefaultClusterAgentResourceSuffix, getClusterAgentVersion(dda))
+	labels := getDefaultLabels(dda, apicommon.DefaultClusterAgentResourceSuffix, getClusterAgentVersion(dda))
 	annotations := getDefaultAnnotations(dda)
 
 	secret := &corev1.Secret{

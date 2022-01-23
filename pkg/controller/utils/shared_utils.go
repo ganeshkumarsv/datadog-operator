@@ -6,6 +6,7 @@
 package utils
 
 import (
+	"github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -23,18 +24,18 @@ func GetAPIKeySecret(credentials *datadoghqv1alpha1.DatadogCredentials, defaultN
 			return true, credentials.APISecret.SecretName, credentials.APISecret.KeyName
 		}
 
-		return true, credentials.APISecret.SecretName, datadoghqv1alpha1.DefaultAPIKeyKey
+		return true, credentials.APISecret.SecretName, common.DefaultAPIKeyKey
 	}
 
 	if credentials.APIKeyExistingSecret != "" {
-		return true, credentials.APIKeyExistingSecret, datadoghqv1alpha1.DefaultAPIKeyKey
+		return true, credentials.APIKeyExistingSecret, common.DefaultAPIKeyKey
 	}
 
 	if credentials.APIKey != "" {
-		return true, defaultName, datadoghqv1alpha1.DefaultAPIKeyKey
+		return true, defaultName, common.DefaultAPIKeyKey
 	}
 
-	return false, defaultName, datadoghqv1alpha1.DefaultAPIKeyKey
+	return false, defaultName, common.DefaultAPIKeyKey
 }
 
 // GetAppKeySecret returns the APP key secret name and the key inside the secret
@@ -45,18 +46,18 @@ func GetAppKeySecret(credentials *datadoghqv1alpha1.DatadogCredentials, defaultN
 			return true, credentials.APPSecret.SecretName, credentials.APPSecret.KeyName
 		}
 
-		return true, credentials.APPSecret.SecretName, datadoghqv1alpha1.DefaultAPPKeyKey
+		return true, credentials.APPSecret.SecretName, common.DefaultAPPKeyKey
 	}
 
 	if credentials.AppKeyExistingSecret != "" {
-		return true, credentials.AppKeyExistingSecret, datadoghqv1alpha1.DefaultAPPKeyKey
+		return true, credentials.AppKeyExistingSecret, common.DefaultAPPKeyKey
 	}
 
 	if credentials.AppKey != "" {
-		return true, defaultName, datadoghqv1alpha1.DefaultAPPKeyKey
+		return true, defaultName, common.DefaultAPPKeyKey
 	}
 
-	return false, defaultName, datadoghqv1alpha1.DefaultAPPKeyKey
+	return false, defaultName, common.DefaultAPPKeyKey
 }
 
 // ShouldReturn returns if we should stop the reconcile loop based on result

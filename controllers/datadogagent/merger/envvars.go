@@ -6,6 +6,8 @@
 package merger
 
 import (
+	"strings"
+
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -26,6 +28,13 @@ func OverrideCurrentEnvVarMergeFunction(current, newEnv *corev1.EnvVar) (*corev1
 // IgnoreNewEnvVarMergeFunction used when the existing corev1.EnvVar needs to be kept.
 func IgnoreNewEnvVarMergeFunction(current, newEnv *corev1.EnvVar) (*corev1.EnvVar, error) {
 	return current.DeepCopy(), nil
+}
+
+// AppendToValueEnvVarMergeFunction used when we add the new value to the existing corev1.EnvVar.
+func AppendToValueEnvVarMergeFunction(current, newEnv *corev1.EnvVar) (*corev1.EnvVar, error) {
+	appendEnvVar := current.DeepCopy()
+	appendEnvVar.Value = strings.Join([]string{current.Value, newEnv.Value}, " ")
+	return appendEnvVar, nil
 }
 
 // ErrorOnMergeAttemptdEnvVarMergeFunction used to avoid replacing an existing EnvVar

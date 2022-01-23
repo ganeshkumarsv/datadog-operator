@@ -75,6 +75,7 @@ func BuildFeaturesV1(dda *v1alpha1.DatadogAgent, options *Options) ([]Feature, e
 
 	for _, id := range sortedkeys {
 		feat := featureBuilders[id](options)
+		options.Logger.Info("test", "feature", id)
 		// only add feat to the output if the feature is enabled
 		if enabled := feat.ConfigureV1(dda); enabled {
 			output = append(output, feat)

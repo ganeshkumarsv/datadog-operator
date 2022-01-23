@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/condition"
 	"github.com/DataDog/datadog-operator/pkg/controller/utils/datadog"
@@ -129,10 +130,10 @@ func dataFromCredentials(credentials *datadoghqv1alpha1.DatadogCredentials) map[
 	data := make(map[string][]byte)
 	// Create secret using DatadogAgent credentials if it exists
 	if credentials.APIKey != "" {
-		data[datadoghqv1alpha1.DefaultAPIKeyKey] = []byte(credentials.APIKey)
+		data[apicommon.DefaultAPIKeyKey] = []byte(credentials.APIKey)
 	}
 	if credentials.AppKey != "" {
-		data[datadoghqv1alpha1.DefaultAPPKeyKey] = []byte(credentials.AppKey)
+		data[apicommon.DefaultAPPKeyKey] = []byte(credentials.AppKey)
 	}
 
 	return data

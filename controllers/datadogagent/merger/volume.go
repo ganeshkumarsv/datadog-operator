@@ -50,14 +50,14 @@ func ErrorOnMergeAttemptdVolumeMergeFunction(current, newVolume *corev1.Volume) 
 
 // AddVolumeToPod use to add a corev1.Volume to a Pod
 // the mergeFunc can be provided to change the default merge behavior
-func AddVolumeToPod(podSpec *corev1.PodSpec, volumeMount *corev1.Volume, mergeFunc VolumeMergeFunction) ([]corev1.Volume, error) {
+func AddVolumeToPod(podSpec *corev1.PodSpec, volume *corev1.Volume, mergeFunc VolumeMergeFunction) ([]corev1.Volume, error) {
 	var found bool
 	for id, cVolume := range podSpec.Volumes {
-		if volumeMount.Name == cVolume.Name {
+		if volume.Name == cVolume.Name {
 			if mergeFunc == nil {
 				mergeFunc = DefaultVolumeMergeFunction
 			}
-			newVolume, err := mergeFunc(&cVolume, volumeMount)
+			newVolume, err := mergeFunc(&cVolume, volume)
 			if err != nil {
 				return nil, err
 			}
@@ -66,7 +66,7 @@ func AddVolumeToPod(podSpec *corev1.PodSpec, volumeMount *corev1.Volume, mergeFu
 		}
 	}
 	if !found {
-		podSpec.Volumes = append(podSpec.Volumes, *volumeMount)
+		podSpec.Volumes = append(podSpec.Volumes, *volume)
 	}
 	return podSpec.Volumes, nil
 }
