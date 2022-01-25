@@ -24,10 +24,8 @@ import (
 )
 
 const (
-	// OperatorStoreLabelKey used to identified which resource is managed by the store.
-	OperatorStoreLabelKey = "operator.datadoghq.com/managed-by-store"
-	// OperatorGenHashAnnotationKey annotation key used on a Resource in order to compare 2 resources without know the spec struct.
-	OperatorGenHashAnnotationKey = "operator.datadoghq.com/gen-hash"
+	// operatorStoreLabelKey used to identified which resource is managed by the store.
+	operatorStoreLabelKey = "operator.datadoghq.com/managed-by-store"
 )
 
 // NewStore returns a new Store instance
@@ -71,7 +69,7 @@ func (ds *Store) AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object) {
 	if obj.GetLabels() == nil {
 		obj.SetLabels(map[string]string{})
 	}
-	obj.GetLabels()[OperatorStoreLabelKey] = "true"
+	obj.GetLabels()[operatorStoreLabelKey] = "true"
 
 	ds.deps[kind][id] = obj
 }
@@ -79,7 +77,7 @@ func (ds *Store) AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object) {
 // Get returns the client.Object instance if it was previously added in the Store.
 // kind correspond to the object kind, and id can be `namespace/name` identifier of just
 // `name` if we are talking about a cluster scope object like `ClusterRole`.
-// It also return a boolean to know if the Object was found.
+// It also return a boolean to know if the Object was found in the Store.
 func (ds *Store) Get(kind kubernetes.ObjectKind, namespace string, name string) (client.Object, bool) {
 	ds.mutex.RLock()
 	defer ds.mutex.RUnlock()
@@ -92,6 +90,24 @@ func (ds *Store) Get(kind kubernetes.ObjectKind, namespace string, name string) 
 		return obj, true
 	}
 	return nil, false
+}
+
+// GetOrCreate returns the client.Object instance.
+// * if it was previously added in the Store, it returns the corresponding object
+// * if it wasn't previously added in the Store, it returns a new instance of the object Kind with
+//   the corresponding name and namespace.
+// `kind`` correspond to the object kind, and id can be `namespace/name` identifier of just
+// `name` if we are talking about a cluster scope object like `ClusterRole`.
+// It also return a boolean to know if the Object was found in the Store.
+func (ds *Store) GetOrCreate(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool) {
+	obj, found := ds.Get(kind, namespace, name)
+	if found {
+		return obj, found
+	}
+	obj = kubernetes.ObjectFromKind(kind)
+	obj.SetName(name)
+	obj.SetNamespace(namespace)
+	return obj, found
 }
 
 // Apply use to create/update resources in the api-server
@@ -143,7 +159,7 @@ func (ds *Store) Cleanup(ctx context.Context, k8sClient client.Client, ddaNs, dd
 
 	var errs []error
 
-	requirementLabel, _ := labels.NewRequirement(OperatorStoreLabelKey, selection.Exists, nil)
+	requirementLabel, _ := labels.NewRequirement(operatorStoreLabelKey, selection.Exists, nil)
 	listOptions := &client.ListOptions{
 		LabelSelector: labels.NewSelector().Add(*requirementLabel),
 	}

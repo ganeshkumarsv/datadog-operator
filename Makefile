@@ -69,12 +69,12 @@ fmt: ## Run go fmt against code
 vet: ## Run go vet against code
 	go vet ./...
 
-gobuild: ## Builds only manager go binary
+managergobuild: ## Builds only manager go binary
 	go build -ldflags '${LDFLAGS}' -o bin/manager main.go
 
 ##@ Deploy
 
-manager: generate lint gobuild ## Build manager binary
+manager: generate lint managergobuild ## Build manager binary
 
 run: generate lint manifests ## Run against the configured Kubernetes cluster in ~/.kube/config
 	go run ./main.go

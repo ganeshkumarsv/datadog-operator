@@ -11,16 +11,14 @@ import (
 	"testing"
 
 	"github.com/DataDog/datadog-operator/pkg/kubernetes"
-
 	assert "github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
-	apiregistrationv1 "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 )
 
 func Test_buildID(t *testing.T) {
@@ -379,7 +377,7 @@ func TestStore_Cleanup(t *testing.T) {
 			Namespace: "bar",
 			Name:      "foo",
 			Labels: map[string]string{
-				OperatorStoreLabelKey: "true",
+				operatorStoreLabelKey: "true",
 			},
 		},
 	}
@@ -452,6 +450,115 @@ func TestStore_Cleanup(t *testing.T) {
 			}
 			got := ds.Cleanup(tt.args.ctx, tt.args.k8sClient, tt.args.ddaNs, tt.args.ddaName)
 			assert.EqualValues(t, tt.want, got, "Store.Cleanup() = %v, want %v", got, tt.want)
+		})
+	}
+}
+
+func TestStore_GetOrCreate(t *testing.T) {
+	dummyConfigMap1 := &corev1.ConfigMap{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "ConfigMap",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "bar",
+			Name:      "foo",
+			Labels: map[string]string{
+				operatorStoreLabelKey: "true",
+			},
+		},
+	}
+
+	emptyConfigMap1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "bar",
+			Name:      "foo",
+		},
+	}
+	emptyNotConfigMap1 := &corev1.ConfigMap{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "bar",
+			Name:      "not",
+		},
+	}
+
+	type fields struct {
+		deps          map[kubernetes.ObjectKind]map[string]client.Object
+		supportCilium bool
+	}
+	type args struct {
+		kind      kubernetes.ObjectKind
+		namespace string
+		name      string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		want      client.Object
+		wantFound bool
+	}{
+		{
+			name: "do not exist",
+			fields: fields{
+				deps: map[kubernetes.ObjectKind]map[string]client.Object{},
+			},
+			args: args{
+				kind:      kubernetes.ConfigMapKind,
+				namespace: "bar",
+				name:      "foo",
+			},
+			want:      emptyConfigMap1,
+			wantFound: false,
+		},
+		{
+			name: "exist",
+			fields: fields{
+				deps: map[kubernetes.ObjectKind]map[string]client.Object{
+					kubernetes.ConfigMapKind: {
+						"bar/foo": dummyConfigMap1,
+					},
+				},
+			},
+			args: args{
+				kind:      kubernetes.ConfigMapKind,
+				namespace: "bar",
+				name:      "foo",
+			},
+			want:      dummyConfigMap1,
+			wantFound: true,
+		},
+		{
+			name: "another configmap exist",
+			fields: fields{
+				deps: map[kubernetes.ObjectKind]map[string]client.Object{
+					kubernetes.ConfigMapKind: {
+						"bar/foo": dummyConfigMap1,
+					},
+				},
+			},
+			args: args{
+				kind:      kubernetes.ConfigMapKind,
+				namespace: "bar",
+				name:      "not",
+			},
+			want:      emptyNotConfigMap1,
+			wantFound: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ds := &Store{
+				deps:          tt.fields.deps,
+				supportCilium: tt.fields.supportCilium,
+			}
+			got, got1 := ds.GetOrCreate(tt.args.kind, tt.args.namespace, tt.args.name)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Store.GetOrCreate() got = %v,\nwant %v", got, tt.want)
+			}
+			if got1 != tt.wantFound {
+				t.Errorf("Store.GetOrCreate() got1 = %v, want %v", got1, tt.wantFound)
+			}
 		})
 	}
 }

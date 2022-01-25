@@ -54,16 +54,5 @@ type BuildFunc func(options *Options) Feature
 type DependenciesStoreClient interface {
 	AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object)
 	Get(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
-}
-
-// PodFeatureConfiguration use to store a Pod Feature Configuration.
-type PodFeatureConfiguration struct {
-	Containers map[string]ContainerFeatureConfiguration
-
-	Volumes []corev1.Volume
-}
-
-// ContainerFeatureConfiguration use to store a Container Feature Configuration.
-type ContainerFeatureConfiguration struct {
-	VolumeMounts []corev1.VolumeMount
+	GetOrCreate(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
 }
