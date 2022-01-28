@@ -16,6 +16,7 @@ import (
 
 	apicommon "github.com/DataDog/datadog-operator/apis/datadoghq/common"
 	common "github.com/DataDog/datadog-operator/controllers/datadogagent/common"
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/dependencies"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/merger"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/object/rbac"
@@ -99,7 +100,7 @@ func (f *ksmFeature) ConfigureV1(dda *v1alpha1.DatadogAgent) bool {
 
 // ManageDependencies allows a feature to manage its dependencies.
 // Feature's dependencies should be added in the store.
-func (f *ksmFeature) ManageDependencies(store feature.DependenciesStoreClient) error {
+func (f *ksmFeature) ManageDependencies(store dependencies.StoreClient) error {
 	// Manage the Check Configuration in a configmap
 	configCM, err := f.buildKSMCoreConfigMap()
 	if err != nil {

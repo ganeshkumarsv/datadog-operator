@@ -8,10 +8,8 @@ package feature
 import (
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
-	"github.com/DataDog/datadog-operator/pkg/kubernetes"
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/dependencies"
 	"github.com/go-logr/logr"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -27,7 +25,7 @@ type Feature interface {
 	ConfigureV1(dda *v1alpha1.DatadogAgent) bool
 	// ManageDependencies allows a feature to manage its dependencies.
 	// Feature's dependencies should be added in the store.
-	ManageDependencies(store DependenciesStoreClient) error
+	ManageDependencies(store dependencies.StoreClient) error
 	// ManageClusterAgent allows a feature to configure the ClusterAgent's corev1.PodTemplateSpec
 	// It should do nothing if the feature doesn't need to configure it.
 	ManageClusterAgent(podTemplate *corev1.PodTemplateSpec) error
@@ -49,10 +47,3 @@ type Options struct {
 // BuildFunc function type used by each Feature during its factory registration.
 // It returns the Feature interface.
 type BuildFunc func(options *Options) Feature
-
-// DependenciesStoreClient dependencies store client interface
-type DependenciesStoreClient interface {
-	AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object)
-	Get(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
-	GetOrCreate(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
-}

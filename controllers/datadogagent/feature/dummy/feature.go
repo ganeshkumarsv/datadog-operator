@@ -10,6 +10,7 @@ import (
 
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v2alpha1"
+	"github.com/DataDog/datadog-operator/controllers/datadogagent/dependencies"
 	"github.com/DataDog/datadog-operator/controllers/datadogagent/feature"
 )
 
@@ -41,7 +42,7 @@ func (f *dummyFeature) ConfigureV1(dda *v1alpha1.DatadogAgent) bool {
 
 // ManageDependencies allows a feature to manage its dependencies.
 // Feature's dependencies should be added in the store.
-func (f *dummyFeature) ManageDependencies(store feature.DependenciesStoreClient) error {
+func (f *dummyFeature) ManageDependencies(store dependencies.StoreClient) error {
 	return nil
 }
 

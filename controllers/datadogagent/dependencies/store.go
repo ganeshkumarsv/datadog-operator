@@ -28,6 +28,13 @@ const (
 	operatorStoreLabelKey = "operator.datadoghq.com/managed-by-store"
 )
 
+// StoreClient dependencies store client interface
+type StoreClient interface {
+	AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object)
+	Get(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
+	GetOrCreate(kind kubernetes.ObjectKind, namespace, name string) (client.Object, bool)
+}
+
 // NewStore returns a new Store instance
 func NewStore(options *StoreOptions) *Store {
 	store := &Store{
@@ -72,6 +79,14 @@ func (ds *Store) AddOrUpdate(kind kubernetes.ObjectKind, obj client.Object) {
 	obj.GetLabels()[operatorStoreLabelKey] = "true"
 
 	ds.deps[kind][id] = obj
+}
+
+// AddOrUpdateStore used to add or update an object in the Store
+// kind correspond to the object kind, and id can be `namespace/name` identifier of just
+// `name` if we are talking about a cluster scope object like `ClusterRole`.
+func (ds *Store) AddOrUpdateStore(kind kubernetes.ObjectKind, obj client.Object) *Store {
+	ds.AddOrUpdate(kind, obj)
+	return ds
 }
 
 // Get returns the client.Object instance if it was previously added in the Store.
