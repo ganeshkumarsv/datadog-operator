@@ -1,0 +1,160 @@
+metadata:
+  creationTimestamp: null
+  name: datadog
+spec:
+  features:
+    admissionController:
+      enabled: true
+    apm:
+      enabled: true
+      hostPortConfig:
+        enabled: true
+        hostPort: 9000
+      unixDomainSocketConfig:
+        enabled: true
+    clusterChecks:
+      useClusterChecksRunners: true
+    containerCollection:
+      criSocketPath: /var/run/crio/crio.sock
+      dockerSocketPath: /var/docker.sock
+      kubelet:
+        tlsVerify: false
+      liveContainerEnabled: true
+    cspm:
+      enabled: true
+    cws:
+      enabled: false
+    dogstatsd:
+      originDetection: true
+      unixDomainSocketConfig:
+        enabled: true
+    eventCollection:
+      kubernetesEventsCollection: true
+    externalMetricsServer:
+      enabled: true
+      useDatadogMetrics: false
+    kubeStateMetricsCore:
+      conf:
+        configMap:
+          name: cluster-agent-ksm-conf
+      enabled: true
+    logCollection:
+      enabled: true
+    npm:
+      enabled: false
+    orchestratorExplorer:
+      conf:
+        configMap:
+          items:
+          - key: config.yaml
+            path: ""
+          name: orch-cm
+      enabled: true
+      endpoint:
+        url: https://orch-explorer.com
+      extraTags:
+      - orch
+      - exp
+      scrubContainers: true
+    processCollection:
+      enabled: true
+    prometheusScrape:
+      additionalConfigs: |-
+        - autodiscovery:
+            kubernetes_annotations:
+              include:
+                custom_label: 'true'
+            kubernetes_container_names:
+            - my-app
+          configurations:
+          - send_distribution_buckets: true
+            timeout: 5
+      enableServiceEndpoints: true
+      enabled: true
+  global:
+    clusterName: foo
+    credentials:
+      apiKey: api-key-inline
+      apiSecret:
+        keyName: api-key
+        secretName: datadog-secret
+      appKey: app-key-inline
+      appSecret:
+        keyName: app-key
+        secretName: datadog-secret
+    endpoint:
+      url: custom-agent.com
+    registry: public.ecr.aws/datadog
+    tags:
+    - hostTag1
+    - hostTag2
+  override:
+    clusterAgent:
+      extraConfd:
+        configMap:
+          items:
+          - key: test
+            path: test.d/test.yaml
+          name: cluster-agent-confd
+      replicas: 2
+    clusterChecksRunner:
+      replicas: 10
+    nodeAgent:
+      annotations:
+        baz: foo
+        foo: bar
+      containers:
+        agent:
+          args:
+          - config
+          - foo.yaml
+          command:
+          - custom-agent
+          - start
+          env:
+          - name: TEST_VAR_CONT
+            value: TEST_VALUE_CONT
+          healthPort: 42
+          livenessProbe:
+            initialDelaySeconds: 30
+          readinessProbe:
+            timeoutSeconds: 10
+          resources:
+            limits:
+              cpu: 400m
+          volumeMounts:
+          - mountPath: ""
+            name: agent-volumeMount
+      createRbac: true
+      env:
+      - name: TEST_VAR_DS
+        value: TEST_VALUE_DS
+      extraChecksd:
+        configMap:
+          name: agent-checksd
+      extraConfd:
+        configMap:
+          name: agent-confd
+      hostPID: true
+      image:
+        jmxEnabled: true
+        name: myagent
+        pullPolicy: Always
+        tag: mytag
+      labels:
+        bar: foo
+        foo: baz
+      name: test-ds-agent
+      securityContext:
+        runAsUser: 0
+        seLinuxOptions:
+          level: s0
+          role: system_r
+          type: spc_t
+          user: system_u
+      serviceAccountName: datadog-agent-scc
+      tolerations:
+      - operator: Exists
+      volumes:
+      - name: agent-volume
+status: {}

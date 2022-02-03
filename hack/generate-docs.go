@@ -14,7 +14,7 @@ import (
 
 const (
 	crdFile       = "config/crd/bases/v1/datadoghq.com_datadogagents.yaml"
-	targetVersion = "v1alpha1"
+	targetVersion = "v2alpha1"
 	headerFile    = "hack/generate-docs/header.markdown"
 	footerFile    = "hack/generate-docs/footer.markdown"
 	docsFile      = "docs/configuration.md"
