@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"testing"
 
+	commonv1 "github.com/DataDog/datadog-operator/apis/datadoghq/common/v1"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	"github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1/test"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
@@ -939,7 +940,7 @@ func Test_newClusterAgentDeploymentFromInstance_MetricsServer(t *testing.T) {
 			MetricsServerPort:             metricsServerPort,
 			MetricsServerCredentials: &datadoghqv1alpha1.DatadogCredentials{
 				APIKey: "extmetrics-api-key-literal-foo",
-				APPSecret: &datadoghqv1alpha1.Secret{
+				APPSecret: &commonv1.Secret{
 					SecretName: "extmetrics-app-key-secret-name",
 					KeyName:    "appkey",
 				},
@@ -1176,7 +1177,7 @@ func Test_newClusterAgentDeploymentFromInstance_UserProvidedSecret(t *testing.T)
 				"foo",
 				&test.NewDatadogAgentOptions{
 					ClusterAgentEnabled: true,
-					APISecret: &datadoghqv1alpha1.Secret{
+					APISecret: &commonv1.Secret{
 						SecretName: "my_secret",
 					},
 				},

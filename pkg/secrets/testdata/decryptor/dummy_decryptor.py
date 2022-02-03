@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 """
 dummy_decryptor.py can be used to mock a secret backend binary

@@ -13,6 +13,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
+	commonv1 "github.com/DataDog/datadog-operator/apis/datadoghq/common/v1"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
 	"github.com/DataDog/datadog-operator/pkg/config"
@@ -87,7 +88,7 @@ func checkCredentials(dda *datadoghqv1alpha1.DatadogAgent) error {
 	return nil
 }
 
-func checkKeyAndSecret(value, secretName string, secret *datadoghqv1alpha1.Secret) bool {
+func checkKeyAndSecret(value, secretName string, secret *commonv1.Secret) bool {
 	if value != "" || secretName != "" || (secret != nil && secret.SecretName != "") {
 		return true
 	}

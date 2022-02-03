@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	commonv1 "github.com/DataDog/datadog-operator/apis/datadoghq/common/v1"
 	datadoghqv1alpha1 "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1"
 	test "github.com/DataDog/datadog-operator/apis/datadoghq/v1alpha1/test"
 	apiutils "github.com/DataDog/datadog-operator/apis/utils"
@@ -1840,7 +1841,7 @@ func complianceSecurityAgentPodSpec(extraEnv map[string]string) corev1.PodSpec {
 	}
 }
 
-func customKubeletConfigPodSpec(kubeletConfig *datadoghqv1alpha1.KubeletConfig) corev1.PodSpec {
+func customKubeletConfigPodSpec(kubeletConfig *commonv1.KubeletConfig) corev1.PodSpec {
 	kubeletCAVolumeType := corev1.HostPathFile
 	KubeletCAVolume := corev1.Volume{
 		Name: "kubelet-ca",
@@ -3514,7 +3515,7 @@ func Test_newExtendedDaemonSetFromInstance_KubeletConfiguration(t *testing.T) {
 		OrchestratorExplorerDisabled: true,
 	})
 
-	dda.Spec.Agent.Config.Kubelet = &datadoghqv1alpha1.KubeletConfig{
+	dda.Spec.Agent.Config.Kubelet = &commonv1.KubeletConfig{
 		Host: &corev1.EnvVarSource{
 			FieldRef: &corev1.ObjectFieldSelector{
 				FieldPath: FieldPathSpecNodeName,
